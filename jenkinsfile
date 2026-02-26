@@ -2,7 +2,7 @@ pipeline {
  agent any
 
  environment {
-  SERVER_IP = '172.31.35.253'
+  SERVER_IP = '172.31.41.18'
   SSH_CREDENTIAL = 'node-app-key'
   REPO_URL = 'https://github.com/narendra-clouds/gym-static-website.git'
   BRANCH = 'main'
