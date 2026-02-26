@@ -1,64 +1,52 @@
 pipeline {
- agent any
+    agent any
 
- environment {
-  SERVER_IP = '172.31.41.18'
-  SSH_CREDENTIAL = 'node-app-key'
-  REPO_URL = 'https://github.com/narendra-clouds/gym-static-website.git'
-  BRANCH = 'main'
-  REMOTE_USER = 'ubuntu'
-  REMOTE_PATH = '/var/www/html'
- }
-
- stages {
-
-  stage('Clone Repository') {
-   steps {
-    git branch: "${BRANCH}", url: "${REPO_URL}"
-   }
-  }
-stage('Prepare Deployment Directory') {
-   steps {
-    sshagent([SSH_CREDENTIAL]) {
-     sh """
-      ssh -o StrictHostKeyChecking=no ${REMOTE_USER}@${SERVER_IP}'
-        sudo mkdir -p ${REMOTE_PATH}
-        sudo chown -R ${REMOTE_USER}:${REMOTE_USER} ${REMOTE_PATH}
-      '
-     """
+    environment {
+        SERVER_IP = '172.31.46.73'
+        SSH_CREDENTIAL = 'gym-key'
+        REPO_URL = 'https://github.com/narendra-clouds/gym-static-website.git'
+        BRANCH = 'main'
+        REMOTE_USER = 'ubuntu'
+        REMOTE_PATH = '/var/www/html'
     }
-   }
-  }
 
- stage('Deploy Website') {
-   steps {
-    sshagent([SSH_CREDENTIAL]) {
-     sh """
-      scp -o StrictHostKeyChecking=no -r * ${REMOTE_USER}@${SERVER_IP}:${REMOTE_PATH}
-     """
+    stages {
+        stage('Clone Repository') {
+            steps {
+                git branch: "${BRANCH}", url: "${REPO_URL}"
+            }
+        }
+
+        stage('Deploy to Target Server') {
+            steps {
+                sshagent([SSH_CREDENTIAL]) {
+                    sh """
+                    ssh -o StrictHostKeyChecking=no ${REMOTE_USER}@${SERVER_IP} 'mkdir -p ${REMOTE_PATH}'
+                    scp -o StrictHostKeyChecking=no -r * ${REMOTE_USER}@${SERVER_IP}:${REMOTE_PATH}
+                    """
+                }
+            }
+        }
+
+        stage('Restart Nginx') {
+            steps {
+                sshagent([SSH_CREDENTIAL]) {
+                    sh """
+                    ssh -o StrictHostKeyChecking=no ${REMOTE_USER}@${SERVER_IP} '
+                    sudo systemctl restart nginx
+                    '
+                    """
+                }
+            }
+        }
     }
-   }
-  }
 
-  stage('Restart Nginx') {
-   steps {
-    sshagent([SSH_CREDENTIAL]) {
-     sh """
-      ssh -o StrictHostKeyChecking=no ${REMOTE_USER}@${SERVER_IP} '
-        sudo systemctl restart nginx
-      '
-     """
+    post {
+        success {
+            echo 'Deployment Successful'
+        }
+        failure {
+            echo 'Deployment Failed'
+        }
     }
-   }
-  }
- }
-
- post {
-  success {
-   echo 'Deployment Successful 🎉'
-  }
-  failure {
-   echo 'Deployment Failed ❌'
-  }
- }
 }
