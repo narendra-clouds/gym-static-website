@@ -16,7 +16,7 @@ pipeline {
         }
         stage('Deploy to Target Server') {
             steps {
-                sshagent([node-app-key]) {
+                sshagent([env.SSH_CREDENTIAL]) {
                     sh '''
                         ssh -o StrictHostKeyChecking=no ${REMOTE_USER}@${SERVER_IP} "sudo mkdir -p ${REMOTE_PATH} && sudo chown -R ${REMOTE_USER}:${REMOTE_USER} ${REMOTE_PATH}"
                         scp -o StrictHostKeyChecking=no -r ./ ${REMOTE_USER}@${SERVER_IP}:${REMOTE_PATH}
